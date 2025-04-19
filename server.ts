@@ -66,7 +66,7 @@ async function build() {
 		bundle: true,
 		format: 'esm',
 		logLevel: 'error',
-		entryPoints: [resolveApp('page.jsx')],
+		entryPoints: [resolveApp('page.tsx')],
 		outdir: resolveBuild(),
 		// avoid bundling npm packages for server-side components
 		packages: 'external',
@@ -77,6 +77,7 @@ async function build() {
 					// Intercept component imports to check for 'use client'
 					build.onResolve({ filter: reactComponentRegex }, async ({ path: relativePath }) => {
 						const path = resolveApp(relativePath);
+						console.log("Read: ", path);
 						const contents = await readFile(path, 'utf-8');
 
 						if (contents.startsWith("'use client'")) {
@@ -100,7 +101,7 @@ async function build() {
 		bundle: true,
 		format: 'esm',
 		logLevel: 'error',
-		entryPoints: [resolveApp('_client.jsx'), ...clientEntryPoints],
+		entryPoints: [resolveApp('_client.tsx'), ...clientEntryPoints],
 		outdir: resolveBuild(),
 		splitting: true,
 		write: false
@@ -161,4 +162,4 @@ function resolveBuild(path = '') {
 	return fileURLToPath(new URL(path, buildDir));
 }
 
-const reactComponentRegex = /\.jsx$/;
+const reactComponentRegex = /\.tsx$/;

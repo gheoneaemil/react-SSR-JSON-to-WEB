@@ -26,13 +26,15 @@
 		"react-server-dom-webpack": "0.0.0-experimental-41b4714f1-20230328"
 	},
 	"devDependencies": {
-		"@types/node": "^18.15.11",
-		"@types/react": "^18.0.31",
+		"@types/node": "^18.19.86",
+		"@types/react": "^18.3.20",
 		"@types/react-dom": "^18.0.11",
 		"@typescript-eslint/eslint-plugin": "^5.57.0",
 		"eslint": "^8.37.0",
 		"eslint-plugin-react": "^7.32.2",
 		"eslint-plugin-unicorn": "^46.0.0",
-		"prettier": "^2.8.7"
+		"prettier": "^2.8.7",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.3"
 	}
 }

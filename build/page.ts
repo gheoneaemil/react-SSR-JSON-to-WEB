@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/page.jsx
 import { Suspense } from "react";
 
 // data/bjork-post.json
@@ -179,7 +179,7 @@ var glass_animals_how_to_be_default = {
   ]
 };
 
-// data/db.ts
+// data/db.js
 var albums = [bjork_post_default, lady_gaga_the_fame_default, glass_animals_how_to_be_default];
 var artificialWait = (ms = 1500) => new Promise((resolve) => setTimeout(resolve, ms));
 async function getAll() {
@@ -187,27 +187,16 @@ async function getAll() {
   return albums;
 }
 
-// app/Like.tsx
-import { useState } from "react";
-import { jsxs } from "react/jsx-runtime";
-"use client";
-function Like() {
-  const [likes, setLikes] = useState(0);
-  return /* @__PURE__ */ jsxs("button", { onClick: () => setLikes(likes + 1), children: [
-    "\u2665 ",
-    likes
-  ] });
-}
-
-// app/page.tsx
-import { Fragment, jsx, jsxs as jsxs2 } from "react/jsx-runtime";
+// app/page.jsx
+import Like from "./Like.js";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 async function Albums() {
   const albums2 = await getAll();
-  return /* @__PURE__ */ jsx("ul", { children: albums2.map((a) => /* @__PURE__ */ jsxs2("li", { className: "flex gap-2 items-center mb-2", children: [
+  return /* @__PURE__ */ jsx("ul", { children: albums2.map((a) => /* @__PURE__ */ jsxs("li", { className: "flex gap-2 items-center mb-2", children: [
     /* @__PURE__ */ jsx("img", { className: "w-20 aspect-square", src: a.cover, alt: a.title }),
-    /* @__PURE__ */ jsxs2("div", { children: [
+    /* @__PURE__ */ jsxs("div", { children: [
       /* @__PURE__ */ jsx("h3", { className: "text-xl", children: a.title }),
-      /* @__PURE__ */ jsxs2("p", { children: [
+      /* @__PURE__ */ jsxs("p", { children: [
         a.songs.length,
         " songs"
       ] }),
@@ -216,7 +205,7 @@ async function Albums() {
   ] }, a.id)) });
 }
 async function Page() {
-  return /* @__PURE__ */ jsxs2(Fragment, { children: [
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsx("h1", { className: "text-3xl mb-3", children: "Spotifn\u2019t" }),
     /* @__PURE__ */ jsx(Suspense, { fallback: "Getting albums", children: /* @__PURE__ */ jsx(Albums, {}) })
   ] });
