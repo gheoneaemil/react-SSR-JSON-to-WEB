@@ -2129,12 +2129,12 @@ react/cjs/react.development.js:
    *)
 */
 
-__commonJS.$$id = "/home/diimiim/ok/server-components-demo/build/chunk-4DEA5GI6.js__commonJS";
+__commonJS.$$id = "/home/diimiim/ok/react-SSR-JSON-to-WEB/build/chunk-4DEA5GI6.js__commonJS";
 __commonJS.$$typeof = Symbol.for("react.client.reference");
 			
-__toESM.$$id = "/home/diimiim/ok/server-components-demo/build/chunk-4DEA5GI6.js__toESM";
+__toESM.$$id = "/home/diimiim/ok/react-SSR-JSON-to-WEB/build/chunk-4DEA5GI6.js__toESM";
 __toESM.$$typeof = Symbol.for("react.client.reference");
 			
-require_react.$$id = "/home/diimiim/ok/server-components-demo/build/chunk-4DEA5GI6.jsrequire_react";
+require_react.$$id = "/home/diimiim/ok/react-SSR-JSON-to-WEB/build/chunk-4DEA5GI6.jsrequire_react";
 require_react.$$typeof = Symbol.for("react.client.reference");
 			

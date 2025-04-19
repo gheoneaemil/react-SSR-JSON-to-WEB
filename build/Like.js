@@ -947,6 +947,6 @@ react/cjs/react-jsx-runtime.development.js:
    *)
 */
 
-Like.$$id = "/home/diimiim/ok/server-components-demo/build/Like.jsdefault";
+Like.$$id = "/home/diimiim/ok/react-SSR-JSON-to-WEB/build/Like.jsdefault";
 Like.$$typeof = Symbol.for("react.client.reference");
 			
