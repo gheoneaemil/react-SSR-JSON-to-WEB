@@ -7,10 +7,13 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import * as ReactServerDom from 'react-server-dom-webpack/server.browser';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse } from 'es-module-lexer';
-import { relative } from 'node:path';
+import { relative, resolve } from 'node:path';
+import { rmSync } from 'node:fs';
 
 const app = new Hono();
 const clientComponentMap = {};
+
+rmSync(resolve('./build'), { recursive: true, force: true });
 
 /**
  * Endpoint to serve your index route.
@@ -39,13 +42,23 @@ app.get('/', async (c) => {
  * into encoded virtual DOM elements for the client to read.
  */
 app.get('/rsc', async (c) => {
-	// Note This will raise a type error until you build with `npm run dev`
-	const Page = await import('./build/page.js');
-	// @ts-expect-error `Type '() => Promise<any>' is not assignable to type 'FunctionComponent<{}>'`
-	const Comp = createElement(Page.default);
+	try {
+		console.log("Before rendering stream");
+		// Note This will raise a type error until you build with `npm run dev`
+		const Page = await import('./build/page.js');
+		const Comp = createElement(Page.default as any);
 
-	const stream = ReactServerDom.renderToReadableStream(Comp, clientComponentMap);
-	return new Response(stream);
+		console.log("Before stream");
+
+		const stream = ReactServerDom.renderToReadableStream(Comp, clientComponentMap);
+
+		console.log("After stream");
+
+		return new Response(stream);
+	} catch (err) {
+		console.error("RSC render error:", err);
+		return c.text('Server Error', 500);
+	}
 });
 
 /**

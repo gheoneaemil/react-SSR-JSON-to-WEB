@@ -926,28 +926,143 @@ var design_default = {
   }
 };
 
-// data/generator.ts
+// data/generator.tsx
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+var data = design_default;
+var getScaleMode = (scaleMode) => {
+  const scaleModeToStyle = {
+    stretch: { "object-fit": "fill" },
+    aspect: { "object-fit": "contain" },
+    mask: {
+      "object-fit": "cover",
+      "clip-path": "circle(50% at 50% 50%)"
+    },
+    tile: {
+      "background-repeat": "repeat"
+    },
+    crop: { "object-fit": "cover" },
+    userCrop: {
+      "object-fit": "cover",
+      "clip-path": "inset(10px 20px)"
+    }
+  };
+  return scaleModeToStyle[scaleMode];
+};
+var getFlexAlignStyles = (horizontal, vertical) => {
+  const justifyMap = {
+    left: "flex-start",
+    center: "center",
+    right: "flex-end"
+  };
+  const alignMap = {
+    top: "flex-start",
+    middle: "center",
+    bottom: "flex-end"
+  };
+  return {
+    display: "flex",
+    justifyContent: justifyMap[horizontal] ?? "flex-start",
+    alignItems: alignMap[vertical] ?? "center"
+  };
+};
+var getScale = (width, height, scale) => {
+  const scaleX = width / scale;
+  const scaleY = height / scale;
+  const finalScale = Math.max(scaleX, scaleY);
+  return {
+    transform: `scale(${finalScale})`,
+    transformOrigin: "0px 0px 0px"
+  };
+};
 function generateDesign() {
-  return design_default;
+  console.log("Server side rendering...");
+  const {
+    width,
+    height,
+    backgroundColor,
+    name,
+    useHandCursor,
+    urlTarget
+  } = data.banner.properties;
+  const aProps = {};
+  if (urlTarget) {
+    aProps.target = urlTarget;
+  }
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("head", { children: [
+      /* @__PURE__ */ jsx("meta", { name: "ad.size", content: `width=${width},height=${height}` }),
+      /* @__PURE__ */ jsx("title", { children: name })
+    ] }),
+    /* @__PURE__ */ jsx("body", { children: /* @__PURE__ */ jsx("a", { ...aProps, children: /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: "relative overflow-hidden border shadow-lg",
+        "data-name": name,
+        style: {
+          backgroundColor: backgroundColor.scolor,
+          borderColor: backgroundColor.borderColor,
+          borderStyle: backgroundColor.type,
+          cursor: useHandCursor ? "pointer" : "auto",
+          backgroundRepeat: "repeat",
+          ...getScaleMode(backgroundColor.scaleMode),
+          ...getFlexAlignStyles(
+            backgroundColor.horizontalAlign,
+            backgroundColor.verticalAlign
+          ),
+          ...getScale(
+            width,
+            height,
+            backgroundColor.contentScale
+          ),
+          width,
+          height
+        },
+        children: data.banner.elements?.map((el, idx) => {
+          return /* @__PURE__ */ jsx(
+            "div",
+            {
+              style: {
+                position: "absolute",
+                top: el.top,
+                left: el.left,
+                width: el.width,
+                height: el.height,
+                backgroundImage: el.imageUrl ? `url(${el.imageUrl})` : void 0,
+                backgroundSize: "cover",
+                ...el.customStyles
+                // if you support extra styles
+              },
+              children: el.type === "text" && /* @__PURE__ */ jsx(
+                "p",
+                {
+                  style: {
+                    fontSize: el.fontSize,
+                    color: el.color,
+                    fontFamily: el.fontFamily
+                  },
+                  children: el.content
+                }
+              )
+            },
+            idx
+          );
+        })
+      }
+    ) }) })
+  ] });
 }
 
 // app/page.tsx
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-async function Albums() {
+import { jsx as jsx2 } from "react/jsx-runtime";
+function Albums() {
   console.log("Server?");
-  const design = await generateDesign();
+  const design = generateDesign();
   console.log("Albums: ", design);
-  return /* @__PURE__ */ jsxs("p", { children: [
-    "Data is: ",
-    JSON.stringify(design)
-  ] });
+  return design;
 }
 async function Page() {
   console.log("Server??");
-  return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx("h1", { className: "text-3xl mb-3", children: "Spotifn\u2019t" }),
-    /* @__PURE__ */ jsx(Suspense, { fallback: "Getting albums", children: /* @__PURE__ */ jsx(Albums, {}) })
-  ] });
+  return /* @__PURE__ */ jsx2(Suspense, { fallback: "Getting design", children: /* @__PURE__ */ jsx2(Albums, {}) });
 }
 export {
   Page as default
