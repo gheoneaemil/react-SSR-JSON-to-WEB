@@ -1,51 +1,49 @@
-import 'ignore-styles';
-import express from "express";
 import React from 'react';
-import fs from "fs";
-import path from "path";
-import { renderToPipeableStream } from "react-dom/server";
-import App from "./src/App";
+import register from '@babel/register';
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { renderToString } from 'react-dom/server';
+import { renderToPipeableStream } from 'react-dom/server';
+import fetch from 'node-fetch'; // or use axios if preferred
+import App from './src/App'; // updated to accept HTML as prop
+import { getDesignsURL } from './utils/methods';
+import { generateDesign } from './utils/generator';
 
-const app = express();
-
-app.use(express.static(path.resolve(__dirname, "build")));
-
-app.use("*", (req, res) => {
-  console.log("Rendering app for ID:", req.params.id);
-
-  fs.readFile(path.resolve("build/index.html"), "utf-8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Some error happened");
-    }
-
-    let didError = false;
-
-    const { pipe } = renderToPipeableStream(<App />, {
-      onShellReady() {
-        // First flush the initial HTML (up to the root div)
-        const initialHtml = data.replace('<div id="root"></div>', '<div id="root">');
-        res.statusCode = didError ? 500 : 200;
-        res.setHeader("Content-Type", "text/html");
-        res.write(initialHtml);
-
-        // Pipe the React stream
-        pipe(res);
-
-        // When it's done, end the HTML
-        res.write("</div>");
-        res.end();
-      },
-      onError(err) {
-        didError = true;
-        console.error("Stream error:", err);
-      },
-    });  
-  });
+register({
+  extensions: ['.ts', '.tsx'],
+  ignore: [/(node_modules)/],
+  presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
 });
 
+const app = express();
 app.use(express.static(path.resolve(__dirname, "build")));
 
+app.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const apiRes = await fetch(getDesignsURL(id));
+    const jsonData = await apiRes.json();
+
+    console.log("Rendering for json : ", jsonData);
+    const renderedDesign = generateDesign(jsonData);
+    console.log(renderedDesign);
+
+    const html = renderToString(generateDesign(jsonData));
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        ${html}
+      </html>
+    `);
+
+  } catch (err) {
+    console.error("Data fetch error:", err);
+    res.status(500).send("Data fetch error");
+  }
+});
+
 app.listen(3000, () => {
-  console.log("App is launched on port 3000");
+  console.log("Server running on port 3000");
 });
