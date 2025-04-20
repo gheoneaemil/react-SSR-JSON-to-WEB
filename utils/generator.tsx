@@ -1,130 +1,294 @@
 import React from 'react';
-import { JsonAlign, JsonScaleMode } from './types';
+import { JsonBackground, JsonBlur, JsonBorder, JsonButtonLabelStyle, JsonDesign, JsonShadow, JsonSlideTransition, JsonTextOldConfigStyle } from './types';
+import { horizontalAlign, scaleModeToStyle, verticalAlign } from './constants';
+import { getScale } from './methods';
 
-const getScaleMode = (scaleMode: JsonScaleMode) => {
-  const scaleModeToStyle = {
-    stretch: { objectFit: "fill" },
-    aspect: { objectFit: "contain" },
-    mask: { 
-      objectFit: "cover",
-      clipPath: "circle(50% at 50% 50%)"
-    },
-    tile: {
-      backgroundRepeat: "repeat"
-    },
-    crop: { objectFit: "cover" },
-    userCrop: { 
-      objectFit: "cover",
-      clipPath: "inset(10px 20px)"
-    },
-  };
-  return scaleModeToStyle[scaleMode];
+const conversions = {
+  scaleMode: (value: string) => scaleModeToStyle[value],
+  verticalAlign: (value: string) => verticalAlign[value],
+  horizontalAlign	: (value: string) => horizontalAlign[value],
+  contentScale: (value: number) => getScale(value),
+  width: (value: number | string) => ({ width: Number(value) }),
+  height: (value: number | string) => ({ height: Number(value) }),
+  bannerUrl: (value: string) => ({ src: value }),
+  urlTarget: (value: string) => ({ target: value }),
+  useHandCursor: (value: boolean) => ({ cursor: value ? 'pointer' : 'auto' }),
+  borderColor: (value: string) => ({ borderColor: value }),
+  scolor: (value: string) => ({ backgroundColor: value }),
+  color: (value: string) => ({ color: value }),
+  type: (value: string) => ({ borderStyle: value }),
+  backgroundColor: (value: JsonBackground) => convertJSONObjectToHTMLStyle(value),
+  id: (value: number) => ({ id: value }),
+  dropShadow: (value: JsonShadow) => {
+    if (!value.useShadow) {
+      return {};
+    }
+    return { boxShadow: `${value.hShadow}px ${value.vShadow}px ${blur}px ${value.spread}px ${value.color}` };
+  },
+  blur: (value: JsonBlur) => {
+    if (!value.useBlur) {
+      return {};
+    }
+
+    return { filter: blur() };
+  },
+  rotation: (value: number) => {
+    if (value === 0) {
+      return {};
+    }
+    return { transform: `rotate(${value}deg)` };
+  },
+  opacity: (value: number) => ({ opacity: value / 100 }),
+  x: (value: number) => ({ left: `${value}px` }),
+  y: (value: number) => ({ top: `${value}px` }),
+  buildIn	: (value: JsonSlideTransition) => ({
+    opacity: value.alphaOffset !== undefined ? 1 - value.alphaOffset : 1,
+    transform: `
+      translate(${value.slidePosX || 0}px, ${value.slidePosY || 0}px)
+      scale(${value.zoom ? 1 + value.zoom / 100 : 1})
+    `,
+    filter: `blur(${value.blurAmount || 0}px)`,
+    color: value.color,
+    transition: `all ${value.duration}s ${value.ease || 'ease'}`,
+  }),
+  backgroundOverColor: (value: string) => ({
+    ":hover": {
+      backgroundColor: value
+    }
+  }),
+  border: (value: JsonBorder) => ({
+    borderColor: value.color,
+    borderWidth: value.weight,
+    borderRadius: value.radius
+  }),
+  labelStyle: (value: JsonButtonLabelStyle) => {
+    console.log("Button: ", value);
+    return {
+      fontFamily: value.fontFamily,
+      fontWeight: value.fontWeight,
+      fontStyle: value.fontStyle,
+      fontSize: value.fontSize,
+      color: value.color,
+      letterSpacing: value.letterSpacing,
+      textTransform: value.textTransform,
+      direction: value.textDirection
+    };
+  },
+  defaultFontSettings: (value: JsonTextOldConfigStyle) => ({
+    fontFamily: value.fontFamily,
+    fontWeight: value.fontWeight,
+    fontStyle: value.fontStyle,
+  }),
+  fontSettings: (value: JsonTextOldConfigStyle) => ({
+    fontFamily: value.fontFamily,
+    fontWeight: value.fontWeight,
+    fontStyle: value.fontStyle,
+  })
 }
 
-const getFlexAlignStyles = (horizontal: JsonAlign, vertical: JsonAlign) => {
-  const justifyMap = {
-    left: 'flex-start',
-    center: 'center',
-    right: 'flex-end',
-  };
+const convertJSONObjectToHTMLStyle = styleObjectProps => {
+  let htmlStyle = {};
+  
+  Object.entries(styleObjectProps)
+  .filter(([key, value]) => {
+    return value !== null && 
+      value !== undefined && 
+      Object.keys(conversions).indexOf(key) !== -1;
+  })
+  .map(([key, value]) => {
+    htmlStyle = {
+      ...htmlStyle,
+      ...conversions[key](value)
+    };
+  });
+  
+  return htmlStyle;
+}
 
-  const alignMap = {
-    top: 'flex-start',
-    middle: 'center',
-    bottom: 'flex-end',
-  };
-
-  return {
-    display: 'flex',
-    justifyContent: justifyMap[horizontal] ?? 'flex-start',
-    alignItems: alignMap[vertical] ?? 'center',
-  };
-};
-
-const getScale = (
-  width: number,
-  height: number,
-  scale: number
-) => {
-  const scaleX = width / scale;
-  const scaleY = height / scale;
-
-  // Use the smaller scale to preserve aspect ratio and avoid overflow
-  const finalScale = Math.max(scaleX, scaleY);
-  return {
-    transform: `scale(${finalScale})`,
-    transformOrigin: '0px 0px 0px'
-  };
-};
-
-export function generateDesign(data: any) {
-  console.log("Server side rendering...");
+const renderImage = (children: any) => {
   const {
-    width,
-    height,
     backgroundColor,
-    name,
-    useHandCursor,
-    urlTarget
-  }: any = data.banner.properties;
+    id,
+    originalName	
+  } = children.properties;
 
-  const aProps: React.AnchorHTMLAttributes<HTMLAnchorElement> = {};
+  return (
+    <img
+      id={id}
+      style={
+        children.type !== "slide"
+          ? convertJSONObjectToHTMLStyle({ backgroundColor })
+          : undefined
+      }
+      data-name={originalName}
+      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+    >
+      {children && children.elements && children.elements.map((el: any, idx) => 
+        el && generateChildren(el)
+      )}
+    </img>
+  );
+}
 
-  if (urlTarget) {
-    aProps.target = urlTarget;
-  }
-    
+const renderButton = (children: any) => {
+  const {
+    backgroundColor,
+    id, labelStyle, 
+    dropShadow,
+    rotation, border, 
+    opacity, backgroundOverColor,
+    width, layerType, 
+    height, buttonLabel,
+    x, y, buildIn
+  } = children.properties;
+
+  const props = {
+    backgroundColor,
+    id, 
+    dropShadow,
+    rotation,
+    opacity,
+    width, border, 
+    height,
+    x, y, buildIn, 
+    backgroundOverColor
+  };
+
+  return (
+    <button
+      type={layerType}
+      style={
+        children.type !== "slide"
+          ? convertJSONObjectToHTMLStyle(props)
+          : undefined
+      }
+      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+    >
+      <span style={convertJSONObjectToHTMLStyle({ labelStyle })}>
+        {buttonLabel}
+      </span>
+    </button>
+  );
+}
+
+const renderParagraph = (children: any) => {
+  const {
+    defaultFontSettings,
+    fontSettings,  
+    text, color
+  } = children.properties;
+  console.log("Rendering paragraph: ", text);
+  return (
+    <p
+      data-text={text} 
+      style={convertJSONObjectToHTMLStyle({ defaultFontSettings, color, fontSettings })}
+    >
+      {children && children.children && children.children.map((el: any) => 
+        el && renderParagraph(el)
+      )}
+    </p>
+  )
+}
+
+const renderText = (children: any) => {
+  const {
+    backgroundColor,
+    id, 
+  } = children.properties;
+
+  console.log("Rendering text");
+
   return (
     <div
-      data-name={name}
-      style={{
-        backgroundColor: backgroundColor.scolor,
-        borderColor: backgroundColor.borderColor,
-        borderStyle: backgroundColor.type,
-        cursor: useHandCursor ? 'pointer' : 'auto',
-        backgroundRepeat: 'repeat',
-        ...getScaleMode(backgroundColor.scaleMode),
-        ...getFlexAlignStyles(
-          backgroundColor.horizontalAlign, 
-          backgroundColor.verticalAlign
-        ),
-        ...getScale(
-          width, height,
-          backgroundColor.contentScale
-        ),
-        width,
-        height,
-      }}
+      id={id}
+      style={
+        children.type !== "slide"
+          ? convertJSONObjectToHTMLStyle({ backgroundColor })
+          : undefined
+      }
+      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
     >
-      {data.banner.elements?.map((el: any, idx) => {
-        return (
-          <div
-            key={idx}
-            style={{
-              position: 'absolute',
-              top: el.top,
-              left: el.left,
-              width: el.width,
-              height: el.height,
-              backgroundImage: el.imageUrl ? `url(${el.imageUrl})` : undefined,
-              backgroundSize: 'cover',
-              ...el.customStyles, // if you support extra styles
-            }}
-          >
-            {el.type === 'text' && (
-              <p
-                style={{
-                  fontSize: el.fontSize,
-                  color: el.color,
-                  fontFamily: el.fontFamily,
-                }}
-              >
-                {el.content}
-              </p>
-            )}
-          </div>
-        );
-      })}
+      {children && children.config && children.config.nodes && children.config.nodes.map((el: any) => 
+        el && renderParagraph(el)
+      )}
     </div>
+  );
+}
+
+const renderDiv = (children: any) => {
+  const {
+    backgroundColor,
+    id, 
+  } = children.properties;
+
+  return (
+    <div
+      id={id}
+      style={
+        children.type !== "slide"
+          ? convertJSONObjectToHTMLStyle({ backgroundColor })
+          : undefined
+      }
+      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+    >
+      {children && children.elements && children.elements.map((el: any, idx) => 
+        el && generateChildren(el)
+      )}
+    </div>
+  );
+}
+
+const convertChildrenToHtmlLayerType = (children: any) => {
+  switch (children.layerType) {
+    case "image":
+      return renderImage(children);
+    case "button":
+      return renderButton(children);
+    case "text":
+      return renderText(children);
+    default:
+      return renderDiv(children);
+  }
+}
+
+const generateChildren = (children: any) => {
+  console.log("Generate children");
+  return convertChildrenToHtmlLayerType(children);
+}
+
+export function generateDesign(data: any) {
+  console.log("Server side rendering... ", data.banner);
+
+  const { 
+    bannerUrl, urlTarget, useHandCursor, name, 
+    width, height, backgroundColor, dateLastUpdate
+  } = data.banner.properties;
+
+  const props = {
+    width,
+    height,
+    useHandCursor, 
+    backgroundColor,
+    display: 'flex',
+    dateLastUpdate
+  };
+
+  return (
+    <a 
+      {...bannerUrl ? { url: bannerUrl } : {}}
+      {...urlTarget ? { target: urlTarget } : {}}
+      style={convertJSONObjectToHTMLStyle({ useHandCursor })}
+      data-name={name}
+    >
+      <div 
+        data-datelastupdate={dateLastUpdate}
+        style={convertJSONObjectToHTMLStyle(props)}
+        data-name={name}
+      >
+        {data.banner.elements && data.banner.elements.map((el: JsonDesign) => 
+          el && generateChildren(el)
+        )}
+      </div>
+    </a>
   );
 }

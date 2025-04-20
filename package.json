@@ -19,7 +19,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start:server": "npx tsx server.tsx"
+    "start:server": "npx tsx watch server.tsx"
   },
   "eslintConfig": {
     "extends": [

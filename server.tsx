@@ -26,6 +26,10 @@ app.get("/:id", async (req, res) => {
     const apiRes = await fetch(getDesignsURL(id));
     const jsonData = await apiRes.json();
 
+    if (id === "j2308jq") {
+      jsonData.banner.properties.backgroundColor.contentScale = 3.43929;
+    }
+
     console.log("Rendering for json : ", jsonData);
     const generatedDesign = renderToString(generateDesign(jsonData));
     const renderedComponent = renderToString(<App html={generatedDesign} />);

@@ -1,4 +1,14 @@
-/* eslint-disable max-lines */
+export type ExtendedBackgroundColor = JsonDesignProperties['backgroundColor'] & {
+    scolor?: string;
+    borderStyle?: string;
+};
+  
+export type AnchorProps = React.HTMLProps<HTMLAnchorElement>;
+
+export type BannerProps = 
+    Pick<JsonDesignProperties, 'width' | 'height' | 'name' | 'bannerUrl' | 'bannerSize'> & 
+    { backgroundColor: ExtendedBackgroundColor } & 
+    Pick<JsonActionGotoURL, 'useHandCursor'> & { urlTarget: string };
 
 export type JsonGradColor = {
     c: string;
