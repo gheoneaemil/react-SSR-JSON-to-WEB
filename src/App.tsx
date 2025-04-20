@@ -1,15 +1,13 @@
-import React from 'react';
-
-type Props = {
+type AppProps = {
   html: string;
 };
 
-function App({ html }: Props) {
+const App = ({ html }: AppProps) => {
   return (
     <>
-      {html}
+      <div dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
-}
+};
 
 export default App;

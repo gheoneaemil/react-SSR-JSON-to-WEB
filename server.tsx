@@ -9,6 +9,7 @@ import fetch from 'node-fetch'; // or use axios if preferred
 import App from './src/App'; // updated to accept HTML as prop
 import { getDesignsURL } from './utils/methods';
 import { generateDesign } from './utils/generator';
+import { readFile } from 'fs/promises';
 
 register({
   extensions: ['.ts', '.tsx'],
@@ -26,17 +27,17 @@ app.get("/:id", async (req, res) => {
     const jsonData = await apiRes.json();
 
     console.log("Rendering for json : ", jsonData);
-    const renderedDesign = generateDesign(jsonData);
-    console.log(renderedDesign);
+    const generatedDesign = renderToString(generateDesign(jsonData));
+    const renderedComponent = renderToString(<App html={generatedDesign} />);
 
-    const html = renderToString(generateDesign(jsonData));
+    const htmlTemplate = await readFile(path.resolve("build/index.html"), "utf-8");
 
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        ${html}
-      </html>
-    `);
+    const finalHtml = htmlTemplate.replace(
+      '<div id="root"></div>',
+      `<div id="root">${renderedComponent}</div>`
+    );
+
+    res.send(finalHtml);
 
   } catch (err) {
     console.error("Data fetch error:", err);

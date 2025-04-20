@@ -75,67 +75,56 @@ export function generateDesign(data: any) {
   }
     
   return (
-    <>
-      <head>
-        <meta name="ad.size" content={`width=${width},height=${height}`} />
-        <title>{name}</title>
-      </head>
-      <body>
-        <a {...aProps}>
+    <div
+      data-name={name}
+      style={{
+        backgroundColor: backgroundColor.scolor,
+        borderColor: backgroundColor.borderColor,
+        borderStyle: backgroundColor.type,
+        cursor: useHandCursor ? 'pointer' : 'auto',
+        backgroundRepeat: 'repeat',
+        ...getScaleMode(backgroundColor.scaleMode),
+        ...getFlexAlignStyles(
+          backgroundColor.horizontalAlign, 
+          backgroundColor.verticalAlign
+        ),
+        ...getScale(
+          width, height,
+          backgroundColor.contentScale
+        ),
+        width,
+        height,
+      }}
+    >
+      {data.banner.elements?.map((el: any, idx) => {
+        return (
           <div
-            className="relative overflow-hidden border shadow-lg"
-            data-name={name}
+            key={idx}
             style={{
-              backgroundColor: backgroundColor.scolor,
-              borderColor: backgroundColor.borderColor,
-              borderStyle: backgroundColor.type,
-              cursor: useHandCursor ? 'pointer' : 'auto',
-              backgroundRepeat: 'repeat',
-              ...getScaleMode(backgroundColor.scaleMode),
-              ...getFlexAlignStyles(
-                backgroundColor.horizontalAlign, 
-                backgroundColor.verticalAlign
-              ),
-              ...getScale(
-                width, height,
-                backgroundColor.contentScale
-              ),
-              width,
-              height,
+              position: 'absolute',
+              top: el.top,
+              left: el.left,
+              width: el.width,
+              height: el.height,
+              backgroundImage: el.imageUrl ? `url(${el.imageUrl})` : undefined,
+              backgroundSize: 'cover',
+              ...el.customStyles, // if you support extra styles
             }}
           >
-            {data.banner.elements?.map((el: any, idx) => {
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'absolute',
-                    top: el.top,
-                    left: el.left,
-                    width: el.width,
-                    height: el.height,
-                    backgroundImage: el.imageUrl ? `url(${el.imageUrl})` : undefined,
-                    backgroundSize: 'cover',
-                    ...el.customStyles, // if you support extra styles
-                  }}
-                >
-                  {el.type === 'text' && (
-                    <p
-                      style={{
-                        fontSize: el.fontSize,
-                        color: el.color,
-                        fontFamily: el.fontFamily,
-                      }}
-                    >
-                      {el.content}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+            {el.type === 'text' && (
+              <p
+                style={{
+                  fontSize: el.fontSize,
+                  color: el.color,
+                  fontFamily: el.fontFamily,
+                }}
+              >
+                {el.content}
+              </p>
+            )}
           </div>
-        </a>
-      </body>
-    </>
+        );
+      })}
+    </div>
   );
 }
