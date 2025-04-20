@@ -1,23 +1,19 @@
 import { Suspense } from 'react';
+import { generateDesign } from '../data/generator';
 
 async function Albums() {
+  console.log("Server?");
+  const design = await generateDesign();
+  console.log("Albums: ", design);
   return (
-    <ul>
-      {/*albums.map((a) => (
-        <li key={a.id} className="flex gap-2 items-center mb-2">
-          <img className="w-20 aspect-square" src={a.cover} alt={a.title} />
-          <div>
-            <h3 className="text-xl">{a.title}</h3>
-            <p>{a.songs.length} songs</p>
-            <Like />
-          </div>
-        </li>
-      ))*/}
-    </ul>
+    <p>
+      Data is: {JSON.stringify(design)}
+    </p>
   );
 }
 
 export default async function Page() {
+  console.log("Server??");
   return (
     <>
       <h1 className="text-3xl mb-3">Spotifn’t</h1>

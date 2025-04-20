@@ -85,9 +85,9 @@ async function build() {
 							return {
 								// Avoid bundling client components into the server build.
 								external: true,
-								// Resolve the client import to the built `.js` file
+								// Resolve the client import to the built `.ts` file
 								// created by the client `esbuild` process below.
-								path: relativePath.replace(reactComponentRegex, '.js')
+								path: relativePath.replace(reactComponentRegex, '.ts')
 							};
 						}
 					});
@@ -105,9 +105,10 @@ async function build() {
 		outdir: resolveBuild(),
 		splitting: true,
 		write: false
-	});
+	} as any);
 
-	outputFiles.forEach(async (file) => {
+	outputFiles?.forEach(async (file) => {
+		console.log("Output file: ", file);
 		// Parse file export names
 		const [, exports] = parse(file.text);
 		let newContents = file.text;
@@ -120,7 +121,7 @@ async function build() {
 
 			clientComponentMap[key] = {
 				// Have the browser import your component from your server
-				// at `/build/[component].js`
+				// at `/build/[component].ts`
 				id: `/build/${relative(resolveBuild(), file.path)}`,
 				// Use the detected export name
 				name: exp.n,
