@@ -1,0 +1,11 @@
+@font-face {
+    font-family: 'Passion One';
+    src: url('./fonts/PassionOne.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  body {
+    font-family: 'Passion One', sans-serif;
+    margin: 0;
+  }

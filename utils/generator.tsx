@@ -1,6 +1,6 @@
 import React from 'react';
-import { JsonBackground, JsonBlur, JsonBorder, JsonButtonLabelStyle, JsonDesign, JsonShadow, JsonSlideTransition, JsonTextOldConfigStyle } from './types';
-import { horizontalAlign, scaleModeToStyle, verticalAlign } from './constants';
+import { JsonBackground, JsonBlur, JsonBorder, JsonButtonLabelStyle, JsonCropData, JsonDesign, JsonShadow, JsonSlideTransition, JsonTextOldConfigStyle } from './types';
+import { horizontalAlign, mediaUrl, scaleModeToStyle, verticalAlign } from './constants';
 import { getScale } from './methods';
 
 const conversions = {
@@ -9,6 +9,7 @@ const conversions = {
   horizontalAlign	: (value: string) => horizontalAlign[value],
   contentScale: (value: number) => getScale(value),
   width: (value: number | string) => ({ width: Number(value) }),
+  initialFontSize: (value: number) => ({ fontSize: value }),
   height: (value: number | string) => ({ height: Number(value) }),
   bannerUrl: (value: string) => ({ src: value }),
   urlTarget: (value: string) => ({ target: value }),
@@ -23,8 +24,16 @@ const conversions = {
     if (!value.useShadow) {
       return {};
     }
-    return { boxShadow: `${value.hShadow}px ${value.vShadow}px ${blur}px ${value.spread}px ${value.color}` };
+
+    return {
+      backgroundPosition: "50% 50%",
+      backgroundRepeat: "no-repeat",
+      filter: `drop-shadow(${value.hShadow}px ${value.vShadow}px ${value.blur}px ${value.color})`
+    };
   },
+  cropData: (value: JsonCropData) => ({
+    backgroundPosition: `-${value.x}px -${value.y}px`
+  }),
   blur: (value: JsonBlur) => {
     if (!value.useBlur) {
       return {};
@@ -43,10 +52,7 @@ const conversions = {
   y: (value: number) => ({ top: `${value}px` }),
   buildIn	: (value: JsonSlideTransition) => ({
     opacity: value.alphaOffset !== undefined ? 1 - value.alphaOffset : 1,
-    transform: `
-      translate(${value.slidePosX || 0}px, ${value.slidePosY || 0}px)
-      scale(${value.zoom ? 1 + value.zoom / 100 : 1})
-    `,
+    transform: `scale(1)`,
     filter: `blur(${value.blurAmount || 0}px)`,
     color: value.color,
     transition: `all ${value.duration}s ${value.ease || 'ease'}`,
@@ -62,9 +68,9 @@ const conversions = {
     borderRadius: value.radius
   }),
   labelStyle: (value: JsonButtonLabelStyle) => {
-    console.log("Button: ", value);
     return {
       fontFamily: value.fontFamily,
+      src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
       fontWeight: value.fontWeight,
       fontStyle: value.fontStyle,
       fontSize: value.fontSize,
@@ -74,21 +80,41 @@ const conversions = {
       direction: value.textDirection
     };
   },
-  defaultFontSettings: (value: JsonTextOldConfigStyle) => ({
+  defaultFontSettings: (value: JsonTextOldConfigStyle) => {
+    console.log("Default: ", value);
+    if (!value) {
+      return {};
+    }
+
+    return {
+      fontFamily: value.fontFamily,
+      src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
+      fontWeight: value.fontWeight,
+      fontStyle: value.fontStyle,
+    }
+  },
+  fontSettings: (value: JsonTextOldConfigStyle) => ({
     fontFamily: value.fontFamily,
+    src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
     fontWeight: value.fontWeight,
     fontStyle: value.fontStyle,
   }),
-  fontSettings: (value: JsonTextOldConfigStyle) => ({
-    fontFamily: value.fontFamily,
-    fontWeight: value.fontWeight,
-    fontStyle: value.fontStyle,
+  /*
+  contentOffsetX: (value: number) => ({
+      position: "absolute",
+      left: `${value}px`
+  }),
+  contentOffsetY: (value: number) => ({
+    position: "absolute",
+    top: `${value}px`
   })
+  */
 }
 
 const convertJSONObjectToHTMLStyle = styleObjectProps => {
   let htmlStyle = {};
   
+  console.log(">> ", styleObjectProps);
   Object.entries(styleObjectProps)
   .filter(([key, value]) => {
     return value !== null && 
@@ -102,28 +128,40 @@ const convertJSONObjectToHTMLStyle = styleObjectProps => {
     };
   });
   
+  console.log(">>>> ", htmlStyle);
   return htmlStyle;
 }
 
 const renderImage = (children: any) => {
   const {
-    backgroundColor,
-    id,
-    originalName	
+    backgroundColor, dropShadow,
+    id, x, y, width, rotation,
+    originalName, height, url, cropData, 
+    contentOffsetX, contentOffsetY,
+    horizontalAlign, verticalAlign
   } = children.properties;
+  
+  const props = {
+    x, y, width, height, backgroundColor, 
+    dropShadow, rotation, contentOffsetX,
+    contentOffsetY, horizontalAlign,
+    verticalAlign, cropData
+  };
 
   return (
     <img
       id={id}
-      style={
-        children.type !== "slide"
-          ? convertJSONObjectToHTMLStyle({ backgroundColor })
-          : undefined
-      }
+      src={`${mediaUrl}/${url}`}
+      style={{
+        position: "absolute",
+        ...(children.type !== "slide"
+          ? convertJSONObjectToHTMLStyle(props)
+          : undefined)
+      }}
       data-name={originalName}
-      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+      key={`element-${children?.id}`}
     >
-      {children && children.elements && children.elements.map((el: any, idx) => 
+      {children?.elements?.map((el: any, idx) => 
         el && generateChildren(el)
       )}
     </img>
@@ -151,18 +189,19 @@ const renderButton = (children: any) => {
     width, border, 
     height,
     x, y, buildIn, 
-    backgroundOverColor
+    backgroundOverColor,
   };
+
+  console.log("Button ", convertJSONObjectToHTMLStyle(props));
 
   return (
     <button
       type={layerType}
-      style={
-        children.type !== "slide"
-          ? convertJSONObjectToHTMLStyle(props)
-          : undefined
-      }
-      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+      style={{
+        position: "absolute",
+        ...(children.type !== "slide" ? convertJSONObjectToHTMLStyle(props) : {})
+      }}
+      key={`element-${children?.id}`}
     >
       <span style={convertJSONObjectToHTMLStyle({ labelStyle })}>
         {buttonLabel}
@@ -172,20 +211,22 @@ const renderButton = (children: any) => {
 }
 
 const renderParagraph = (children: any) => {
-  const {
+  console.log(">>> ", children);
+  let {
     defaultFontSettings,
     fontSettings,  
     text, color
-  } = children.properties;
-  console.log("Rendering paragraph: ", text);
+  } = children;
+
   return (
     <p
       data-text={text} 
       style={convertJSONObjectToHTMLStyle({ defaultFontSettings, color, fontSettings })}
     >
-      {children && children.children && children.children.map((el: any) => 
+      {children?.children?.map((el: any) => 
         el && renderParagraph(el)
       )}
+      {!children.children && text}
     </p>
   )
 }
@@ -193,22 +234,32 @@ const renderParagraph = (children: any) => {
 const renderText = (children: any) => {
   const {
     backgroundColor,
+    initialFontSize, 
     id, 
   } = children.properties;
 
-  console.log("Rendering text");
+  console.log("Rendering text ");
 
   return (
     <div
       id={id}
-      style={
-        children.type !== "slide"
-          ? convertJSONObjectToHTMLStyle({ backgroundColor })
-          : undefined
-      }
-      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+      style={{
+        fontVariantLigatures: "normal",
+        lineHeight: 1.3,
+        letterSpacing: "0px",
+        textAlign: "center",
+        wordWrap: "break-word",
+        width: "313.3881px",
+        height: "81.6294px",
+        left: "11px",
+        top: "20px",
+        perspective: "276.51px",
+        position: "absolute",
+        ...(children.type !== "slide" ? convertJSONObjectToHTMLStyle({ backgroundColor, initialFontSize }) : {})
+      }}
+      key={`element-${children?.id}`}
     >
-      {children && children.config && children.config.nodes && children.config.nodes.map((el: any) => 
+      {children?.properties?.config?.nodes?.map((el: any) => 
         el && renderParagraph(el)
       )}
     </div>
@@ -217,21 +268,18 @@ const renderText = (children: any) => {
 
 const renderDiv = (children: any) => {
   const {
-    backgroundColor,
-    id, 
+    backgroundColor, id
   } = children.properties;
 
   return (
     <div
       id={id}
       style={
-        children.type !== "slide"
-          ? convertJSONObjectToHTMLStyle({ backgroundColor })
-          : undefined
+        children.type !== "slide" ? convertJSONObjectToHTMLStyle({ backgroundColor }) : undefined
       }
-      key={`${children.type}_${children?.id}_${children?.duration}_${children?.backgroundColor?.contentScale}_${children?.properties?.width}`}
+      key={`element-${children?.id}`}
     >
-      {children && children.elements && children.elements.map((el: any, idx) => 
+      {children?.elements?.map((el: any, idx) => 
         el && generateChildren(el)
       )}
     </div>
@@ -282,10 +330,13 @@ export function generateDesign(data: any) {
     >
       <div 
         data-datelastupdate={dateLastUpdate}
-        style={convertJSONObjectToHTMLStyle(props)}
+        style={{
+          left: 0,
+          ...convertJSONObjectToHTMLStyle(props)
+        }}
         data-name={name}
       >
-        {data.banner.elements && data.banner.elements.map((el: JsonDesign) => 
+        {data?.banner?.elements?.map((el: JsonDesign) => 
           el && generateChildren(el)
         )}
       </div>

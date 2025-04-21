@@ -26,3 +26,5 @@ export const horizontalAlign = {
     center: { justifyContent: 'center' },
     right: { justifyContent: 'flex-end' },
 };
+
+export const mediaUrl = "https://d2gla4g2ia06u2.cloudfront.net/assets/media";
