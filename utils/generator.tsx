@@ -28,7 +28,7 @@ const conversions = {
     return {
       backgroundPosition: "50% 50%",
       backgroundRepeat: "no-repeat",
-      filter: `drop-shadow(${value.hShadow}px ${value.vShadow}px ${value.blur}px ${value.color})`
+      filter: `drop-shadow(${value.hShadow}px ${value.vShadow}px ${value.color}))`
     };
   },
   cropData: (value: JsonCropData) => ({
@@ -39,7 +39,7 @@ const conversions = {
       return {};
     }
 
-    return { filter: blur() };
+    return { filter: `blur(${value.pixels}px)` };
   },
   rotation: (value: number) => {
     if (value === 0) {
@@ -70,7 +70,6 @@ const conversions = {
   labelStyle: (value: JsonButtonLabelStyle) => {
     return {
       fontFamily: value.fontFamily,
-      src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
       fontWeight: value.fontWeight,
       fontStyle: value.fontStyle,
       fontSize: value.fontSize,
@@ -88,33 +87,23 @@ const conversions = {
 
     return {
       fontFamily: value.fontFamily,
-      src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
       fontWeight: value.fontWeight,
       fontStyle: value.fontStyle,
     }
   },
   fontSettings: (value: JsonTextOldConfigStyle) => ({
     fontFamily: value.fontFamily,
-    src: `url('/public/fonts/${value.fontFamily.split(" ").join("")}.ttf') format('truetype')`,
     fontWeight: value.fontWeight,
     fontStyle: value.fontStyle,
   }),
-  /*
-  contentOffsetX: (value: number) => ({
-      position: "absolute",
-      left: `${value}px`
-  }),
-  contentOffsetY: (value: number) => ({
-    position: "absolute",
-    top: `${value}px`
+  fontSize: (value: number) => ({
+    fontSize: value
   })
-  */
 }
 
 const convertJSONObjectToHTMLStyle = styleObjectProps => {
   let htmlStyle = {};
   
-  console.log(">> ", styleObjectProps);
   Object.entries(styleObjectProps)
   .filter(([key, value]) => {
     return value !== null && 
@@ -128,7 +117,6 @@ const convertJSONObjectToHTMLStyle = styleObjectProps => {
     };
   });
   
-  console.log(">>>> ", htmlStyle);
   return htmlStyle;
 }
 
@@ -221,7 +209,11 @@ const renderParagraph = (children: any) => {
   return (
     <p
       data-text={text} 
-      style={convertJSONObjectToHTMLStyle({ defaultFontSettings, color, fontSettings })}
+      style={{ 
+        position: "absolute", 
+        marginTop: 0,
+        ...convertJSONObjectToHTMLStyle({ defaultFontSettings, color, fontSettings })
+      }}
     >
       {children?.children?.map((el: any) => 
         el && renderParagraph(el)
@@ -235,7 +227,7 @@ const renderText = (children: any) => {
   const {
     backgroundColor,
     initialFontSize, 
-    id, 
+    id, scale
   } = children.properties;
 
   console.log("Rendering text ");
@@ -253,9 +245,8 @@ const renderText = (children: any) => {
         height: "81.6294px",
         left: "11px",
         top: "20px",
-        perspective: "276.51px",
         position: "absolute",
-        ...(children.type !== "slide" ? convertJSONObjectToHTMLStyle({ backgroundColor, initialFontSize }) : {})
+        ...(children.type !== "slide" ? convertJSONObjectToHTMLStyle({ backgroundColor, initialFontSize, fontSize: scale * initialFontSize }) : {})
       }}
       key={`element-${children?.id}`}
     >
