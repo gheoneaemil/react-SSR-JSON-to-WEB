@@ -28,3 +28,4 @@ export const horizontalAlign = {
 };
 
 export const mediaUrl = "https://d2gla4g2ia06u2.cloudfront.net/assets/media";
+export const port = 3000;

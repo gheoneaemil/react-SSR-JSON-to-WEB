@@ -1,15 +1,14 @@
 import React from 'react';
 import register from '@babel/register';
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
 import { renderToString } from 'react-dom/server';
-import { renderToPipeableStream } from 'react-dom/server';
 import fetch from 'node-fetch'; // or use axios if preferred
 import App from './src/App'; // updated to accept HTML as prop
 import { getDesignsURL } from './utils/methods';
 import { generateDesign } from './utils/generator';
 import { readFile } from 'fs/promises';
+import { port } from './utils/constants';
 
 register({
   extensions: ['.ts', '.tsx'],
@@ -30,7 +29,6 @@ app.get("/:id", async (req, res) => {
       jsonData.banner.properties.backgroundColor.contentScale = 3.43929;
     }
 
-    console.log("Rendering for json : ", jsonData);
     const generatedDesign = renderToString(generateDesign(jsonData));
     const renderedComponent = renderToString(<App html={generatedDesign} />);
 
@@ -49,6 +47,6 @@ app.get("/:id", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });

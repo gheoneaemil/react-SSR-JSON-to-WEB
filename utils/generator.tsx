@@ -80,7 +80,6 @@ const conversions = {
     };
   },
   defaultFontSettings: (value: JsonTextOldConfigStyle) => {
-    console.log("Default: ", value);
     if (!value) {
       return {};
     }
@@ -180,8 +179,6 @@ const renderButton = (children: any) => {
     backgroundOverColor,
   };
 
-  console.log("Button ", convertJSONObjectToHTMLStyle(props));
-
   return (
     <button
       type={layerType}
@@ -199,7 +196,6 @@ const renderButton = (children: any) => {
 }
 
 const renderParagraph = (children: any) => {
-  console.log(">>> ", children);
   let {
     defaultFontSettings,
     fontSettings,  
@@ -209,6 +205,7 @@ const renderParagraph = (children: any) => {
   return (
     <p
       data-text={text} 
+      key={`element-${text}-${color}`}
       style={{ 
         position: "absolute", 
         marginTop: 0,
@@ -229,8 +226,6 @@ const renderText = (children: any) => {
     initialFontSize, 
     id, scale
   } = children.properties;
-
-  console.log("Rendering text ");
 
   return (
     <div
@@ -291,13 +286,10 @@ const convertChildrenToHtmlLayerType = (children: any) => {
 }
 
 const generateChildren = (children: any) => {
-  console.log("Generate children");
   return convertChildrenToHtmlLayerType(children);
 }
 
 export function generateDesign(data: any) {
-  console.log("Server side rendering... ", data.banner);
-
   const { 
     bannerUrl, urlTarget, useHandCursor, name, 
     width, height, backgroundColor, dateLastUpdate
